@@ -1,6 +1,6 @@
 {
   "environment": "production",
-  "allowProductionRelease": true,
+  "allowProductionRelease": false,
   "requiredTests": [
     "release configuration"
   ]
