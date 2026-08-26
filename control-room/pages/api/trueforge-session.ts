@@ -20,7 +20,7 @@ export default async function handler(
       },
       body: JSON.stringify({
         agent: {
-          name: "release-commander",
+          name: "release-commander-demo",
         },
       }),
     });

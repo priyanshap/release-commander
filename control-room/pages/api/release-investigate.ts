@@ -32,11 +32,10 @@ export default async function handler(
   }
 
   const workspace = await mkdtemp(
-    join(tmpdir(), "release-commander-approved-")
+    join(tmpdir(), "release-commander-investigate-")
   );
 
   try {
-    // Fresh deterministic checkout.
     await execFileAsync("git", [
       "clone",
       "--depth",
@@ -52,22 +51,7 @@ export default async function handler(
       "release.config.json"
     );
 
-    const before = await readFile(configPath, "utf8");
-
-    if (!before.includes('"allowProductionRelease": false')) {
-      return res.status(409).json({
-        error:
-          "Expected deterministic blocker was not present.",
-      });
-    }
-
-    const after = before.replace(
-      '"allowProductionRelease": false',
-      '"allowProductionRelease": true'
-    );
-
-    const { writeFile } = await import("node:fs/promises");
-    await writeFile(configPath, after, "utf8");
+    const config = await readFile(configPath, "utf8");
 
     let stdout = "";
     let stderr = "";
@@ -87,28 +71,29 @@ export default async function handler(
     } catch (error: any) {
       stdout = error.stdout || "";
       stderr = error.stderr || "";
+
       exitCode =
         typeof error.code === "number"
           ? error.code
           : 1;
     }
 
-    const safe =
-      exitCode === 0 &&
-      stdout.includes("SAFE TO SHIP");
+    const blocker =
+      config.includes(
+        '"allowProductionRelease": false'
+      )
+        ? "allowProductionRelease is false"
+        : null;
+
+    const blocked =
+      exitCode !== 0 ||
+      stdout.includes("RELEASE BLOCKED");
 
     return res.status(200).json({
       sessionId,
-      approved: true,
-      execution: "deterministic-approved-remediation",
       branch: BRANCH,
-      remoteGitHubModified: false,
-
-      patch: {
-        file: "release.config.json",
-        before: '"allowProductionRelease": false',
-        after: '"allowProductionRelease": true',
-      },
+      repository:
+        "priyanshap/release-commander",
 
       verification: {
         command:
@@ -118,20 +103,34 @@ export default async function handler(
         exitCode,
       },
 
-      verdict: safe
-        ? "SAFE TO SHIP"
-        : "RELEASE BLOCKED",
+      blocker,
+
+      patch: blocker
+        ? {
+            file: "release.config.json",
+            before:
+              '"allowProductionRelease": false',
+            after:
+              '"allowProductionRelease": true',
+          }
+        : null,
+
+      verdict: blocked
+        ? "RELEASE BLOCKED"
+        : "SAFE TO SHIP",
+
+      remoteGitHubModified: false,
     });
   } catch (error: any) {
     console.error(
-      "Approved deterministic remediation failed:",
+      "Release investigation failed:",
       error
     );
 
     return res.status(500).json({
       error:
         error?.message ||
-        "Approved remediation failed",
+        "Release investigation failed",
     });
   } finally {
     await rm(workspace, {
