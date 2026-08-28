@@ -4,7 +4,7 @@
 
 Release Commander investigates a software release, detects deterministic blockers, proposes the smallest remediation, pauses before mutation, and verifies the release again after explicit human approval.
 
-The project combines **TrueForge**, **deterministic verification**, **GitHub MCP**, **Qodo code review**, and a dedicated **Next.js Release Control Room**.
+The project combines **TrueForge**, **deterministic verification**, **Qodo code review**, and a dedicated **Next.js Release Control Room**. **GitHub MCP** can be enabled optionally for repository-tool integration.
 
 ---
 
@@ -131,14 +131,17 @@ The development agent is:
 release-commander-demo
 ```
 
-Its configuration includes:
+The current demo configuration is intentionally lean and reproducible:
 
-- sandbox capability;
-- GitHub MCP;
-- dynamic sub-agents;
-- generative UI;
-- human-question capability;
-- approval requirements for GitHub write/destructive tools.
+- TrueForge sandbox execution enabled;
+- file downloads enabled inside the sandbox;
+- local `ollama/qwen3` model;
+- no MCP servers required for the deterministic demo;
+- dynamic sub-agents disabled;
+- generative UI disabled;
+- ask-user-question capability disabled.
+
+GitHub MCP remains an optional integration rather than a requirement for the demo path.
 
 A real TrueForge execution path was validated by executing:
 
@@ -487,7 +490,7 @@ release-commander/
 - **Next.js** — Release Control Room
 - **React + TypeScript** — frontend
 - **Python** — deterministic release verification
-- **GitHub MCP** — repository tooling
+- **GitHub MCP** — optional repository-tool integration
 - **Qodo** — pull-request code review
 - **Ollama** — local model inference
 - **GitHub Actions** — CI
